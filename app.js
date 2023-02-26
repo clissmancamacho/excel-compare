@@ -141,11 +141,10 @@ const searchCodesAndPush = (col, arrayToPush, codesCompCredito) => {
           typeof value === "string"
             ? parseInt(value.replace("\n", ""), 10)
             : value
+        arrayToPush.push(value)
         if (c?.style?.fill?.fgColor?.argb === "FFFF0000") {
           codesCompCredito.push(value)
-        } else {
-          arrayToPush.push(value)
-        }
+        } 
       }
     }
   })
