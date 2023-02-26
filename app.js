@@ -47,7 +47,7 @@ app.get("/", async (req, res) => {
                 let code = codeUnformatted[3]
                 let amount = codeUnformatted[4]
                 code = code?.replace("$", "")
-                amount = amount?.replace(".", "")
+                amount = amount?.replace(/\./g, "")
                 return {
                   code: parseInt(code, 10),
                   amount: parseInt(amount, 10),
@@ -81,7 +81,7 @@ app.get("/", async (req, res) => {
                 let code = codeUnformatted[4]
                 let amount = codeUnformatted[5]
                 code = code?.replace("$", "")
-                amount = amount?.replace(".", "")
+                amount = amount?.replace(/\./g, "")
                 return {
                   code: parseInt(code, 10),
                   amount: parseInt(amount, 10),
@@ -98,7 +98,7 @@ app.get("/", async (req, res) => {
                 let code = codeUnformatted[6]
                 let amount = codeUnformatted[7]
                 code = code?.replace("$", "")
-                amount = amount?.replace(".", "")
+                amount = amount?.replace(/\./g, "")
                 return {
                   code: parseInt(code, 10),
                   amount: parseInt(amount, 10),
@@ -150,15 +150,13 @@ const searchCodesAndPush = (col, arrayToPush, codesCompCredito, worksheet) => {
           typeof value === "string"
             ? parseInt(value.replace("\n", ""), 10)
             : value
-        arrayToPush.push({
+        const objToPush = {
           code: value,
           amount: worksheet.getCell(`G${index}`).value,
-        })
+        }
+        arrayToPush.push(objToPush)
         if (c?.style?.fill?.fgColor?.argb === "FFFF0000") {
-          codesCompCredito.push({
-            code: value,
-            amount: worksheet.getCell(`G${index}`).value,
-          })
+          codesCompCredito.push(objToPush)
         }
       }
     }
@@ -167,9 +165,6 @@ const searchCodesAndPush = (col, arrayToPush, codesCompCredito, worksheet) => {
 
 const verifyIfExistAndSameAmount = (arrayCompare, arrayCodes, arrayToPush) => {
   arrayCompare.forEach((value, index) => {
-    if (value.code === 90488) {
-      console.log(value)
-    }
     const infoBoleta = arrayCodes.find((item) => item.code === value.code)
     if (!infoBoleta || infoBoleta.amount !== value.amount) {
       console.log(`Hay un problema con la boleta ${value.code}`)
