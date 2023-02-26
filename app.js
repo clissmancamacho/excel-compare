@@ -31,9 +31,9 @@ app.get("/", async (req, res) => {
     const codesFactura = []
     let codesFacturaCompare = []
 
-    searchCodesAndPush(c1, codesBoleta, codesCompCredito)
-    searchCodesAndPush(c2, codesCV, codesCompCredito)
-    searchCodesAndPush(c3, codesFactura, codesCompCredito)
+    searchCodesAndPush(c1, codesBoleta, codesCompCredito, worksheet)
+    searchCodesAndPush(c2, codesCV, codesCompCredito, worksheet)
+    searchCodesAndPush(c3, codesFactura, codesCompCredito, worksheet)
 
     const worksheet2 = workbook.getWorksheet("CIERRE DE CAJA")
     worksheet2.eachRow({ includeEmpty: false }, function (row, rowNumber) {
@@ -45,8 +45,13 @@ app.get("/", async (req, res) => {
               if (index !== 1) {
                 const codeUnformatted = item.split(" ")
                 let code = codeUnformatted[3]
+                let amount = codeUnformatted[4]
                 code = code?.replace("$", "")
-                return parseInt(code, 10)
+                amount = amount?.replace(".", "")
+                return {
+                  code: parseInt(code, 10),
+                  amount: parseInt(amount, 10),
+                }
               }
             })
             .filter((item) => item !== undefined)
@@ -57,8 +62,13 @@ app.get("/", async (req, res) => {
               if (index !== 1) {
                 const codeUnformatted = item.split(" ")
                 let code = codeUnformatted[4]
-                code = code.replace("$", "")
-                return parseInt(code, 10)
+                let amount = codeUnformatted[5]
+                code = code?.replace("$", "")
+                amount = amount?.replace(/\./g, "")
+                return {
+                  code: parseInt(code, 10),
+                  amount: parseInt(amount, 10),
+                }
               }
             })
             .filter((item) => item !== undefined)
@@ -69,8 +79,13 @@ app.get("/", async (req, res) => {
               if (index !== 1) {
                 const codeUnformatted = item.split(" ")
                 let code = codeUnformatted[4]
-                code = code.replace("$", "")
-                return parseInt(code, 10)
+                let amount = codeUnformatted[5]
+                code = code?.replace("$", "")
+                amount = amount?.replace(".", "")
+                return {
+                  code: parseInt(code, 10),
+                  amount: parseInt(amount, 10),
+                }
               }
             })
             .filter((item) => item !== undefined)
@@ -81,8 +96,13 @@ app.get("/", async (req, res) => {
               if (index !== 1) {
                 const codeUnformatted = item.split(" ")
                 let code = codeUnformatted[6]
-                code = code.replace("$", "")
-                return parseInt(code, 10)
+                let amount = codeUnformatted[7]
+                code = code?.replace("$", "")
+                amount = amount?.replace(".", "")
+                return {
+                  code: parseInt(code, 10),
+                  amount: parseInt(amount, 10),
+                }
               }
             })
             .filter((item) => item !== undefined)
@@ -90,33 +110,22 @@ app.get("/", async (req, res) => {
       }
     })
     const missingBoleta = []
-    codesBoletaCompare.forEach((value, index) => {
-      if (!codesBoleta.find((item) => item === value)) {
-        console.log(`El codigo de las boletas ${value} no está`)
-        missingBoleta.push(value)
-      }
-    })
     const missingCV = []
-    codesCVCompare.forEach((value, index) => {
-      if (!codesCV.find((item) => item === value)) {
-        console.log(`El codigo de las comprobantes de venta ${value} no está`)
-        missingCV.push(value)
-      }
-    })
     const missingFactura = []
-    codesFacturaCompare.forEach((value, index) => {
-      if (!codesFactura.find((item) => item === value)) {
-        console.log(`El codigo de las factura ${value} no está`)
-        missingFactura.push(value)
-      }
-    })
     const missingCompCredito = []
-    codesCompCreditoCompare.forEach((value, index) => {
-      if (!codesCompCredito.find((item) => item === value)) {
-        console.log(`El codigo de las factura ${value} no está`)
-        missingCompCredito.push(value)
-      }
-    })
+    verifyIfExistAndSameAmount(codesBoletaCompare, codesBoleta, missingBoleta)
+    verifyIfExistAndSameAmount(codesCVCompare, codesCV, missingCV)
+    verifyIfExistAndSameAmount(
+      codesFacturaCompare,
+      codesFactura,
+      missingFactura
+    )
+    verifyIfExistAndSameAmount(
+      codesCompCreditoCompare,
+      codesCompCredito,
+      missingCompCredito
+    )
+
     return res.send({
       missingBoleta,
       missingCV,
@@ -132,7 +141,7 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
 
-const searchCodesAndPush = (col, arrayToPush, codesCompCredito) => {
+const searchCodesAndPush = (col, arrayToPush, codesCompCredito, worksheet) => {
   col.eachCell((c, index) => {
     if (index !== 1 && index !== 2) {
       let value = c.value
@@ -141,11 +150,33 @@ const searchCodesAndPush = (col, arrayToPush, codesCompCredito) => {
           typeof value === "string"
             ? parseInt(value.replace("\n", ""), 10)
             : value
-        arrayToPush.push(value)
+        arrayToPush.push({
+          code: value,
+          amount: worksheet.getCell(`G${index}`).value,
+        })
         if (c?.style?.fill?.fgColor?.argb === "FFFF0000") {
-          codesCompCredito.push(value)
-        } 
+          codesCompCredito.push({
+            code: value,
+            amount: worksheet.getCell(`G${index}`).value,
+          })
+        }
       }
+    }
+  })
+}
+
+const verifyIfExistAndSameAmount = (arrayCompare, arrayCodes, arrayToPush) => {
+  arrayCompare.forEach((value, index) => {
+    if (value.code === 90488) {
+      console.log(value)
+    }
+    const infoBoleta = arrayCodes.find((item) => item.code === value.code)
+    if (!infoBoleta || infoBoleta.amount !== value.amount) {
+      console.log(`Hay un problema con la boleta ${value.code}`)
+      arrayToPush.push({
+        cierreCaja: value,
+        pagoDiario: infoBoleta ?? "No existe en pago diario",
+      })
     }
   })
 }
