@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "e89888c5-929b-49c7-84cb-fd693109b8a1",
+    "colId": "2fef85ff-98f9-4e7a-b972-43088a293116",
+    "containerId": "",
+    "name": "Compare",
+    "url": "http://localhost:3000/",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2023-02-26T18:28:25.122Z",
+    "modified": "2023-02-26T18:28:28.590Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  }
+]
